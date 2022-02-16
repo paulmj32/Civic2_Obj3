@@ -105,3 +105,11 @@ gg2 = ggplot(Harris_map)+
         axis.title.y = element_blank()
   )
 print(gg2)
+
+## Output to csv
+obj3_out = Harris_map %>%
+  #dplyr::filter(GEOID %in% obj3_tracts) %>%
+  arrange(GEOID) %>%
+  dplyr::select(GEOID, gistar01) %>%
+  st_set_geometry(NULL)
+write.csv(obj3_out, file = "./Data/obj3_out.csv", row.names = FALSE)
