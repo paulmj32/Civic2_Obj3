@@ -1,6 +1,7 @@
 ##########################################################################################
 #### LOAD PACKAGES AND SET WORKING DIRECTORY #############################################
 ##########################################################################################
+require(plumber)
 require(tidyverse)
 require(tidycensus) 
 require(sf)
@@ -110,6 +111,30 @@ print(gg2)
 obj3_out = Harris_map %>%
   #dplyr::filter(GEOID %in% obj3_tracts) %>%
   arrange(GEOID) %>%
-  dplyr::select(GEOID, gistar01) %>%
-  st_set_geometry(NULL)
-write.csv(obj3_out, file = "./Data/obj3_out.csv", row.names = FALSE)
+  mutate(geoId = GEOID) %>%
+  mutate(vulnerabilityIndex = as.numeric(gistar01)) %>%
+  dplyr::select(geoId, vulnerabilityIndex) %>%
+  st_set_geometry(NULL) %>%
+  dplyr::slice(1:50)
+#write.csv(obj3_out, file = "./Data/obj3_out.csv", row.names = FALSE)
+
+require(jsonlite)
+require(httr)
+api = 'https://civic2-webapi.azurewebsites.net/powergridvulnerability'
+api2 = "https://269a5777-047e-4d5a-94f8-6c8dfee7001c.mock.pstmn.io"
+#https://stackoverflow.com/questions/39809117/how-to-post-api-in-r-having-header-json-body
+obj3_out_json = toJSON(obj3_out, pretty = T)
+POST(url = api,
+     body = obj3_out_json,
+     add_headers(.headers = c("Content-Type" = "application/json"))
+     )
+
+#GET try
+get = GET(url = api)
+get_content_text = content(get, as = "text", encoding = "UTF-8")
+get_content_json = fromJSON(get_content_text)
+
+to_json = toJSON(get_content_json, pretty = T)
+POST(url = api, accept_json(), content_type_json(), body = to_json)
+
+
